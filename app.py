@@ -96,7 +96,7 @@ input {
 # TÍTULO
 # ============================================================
 
-st.title("🐒 MONKY BIN ANALYZER ")
+st.title("🐒 🌿💨 MONKY BIN ANALYZER ")
 
 st.write(
     "Busca un valor exacto, realiza un barrido de las tres "
