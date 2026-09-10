@@ -520,7 +520,7 @@ if buscar:
         st.info(
             f"Se modificarán los valores cuya diferencia "
             f"absoluta respecto de **{objetivo:,}** sea "
-            f"**menor a {UMBRAL_MODIFICACION:,}**."
+            f"**menor a {1000000:,}**."
         )
 
 
