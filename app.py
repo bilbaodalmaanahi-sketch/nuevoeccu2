@@ -167,7 +167,8 @@ st.number_input(
 # 100.000 unidades del objetivo será modificado.
 # ============================================================
 
-UMBRAL_MODIFICACION = 100
+UMBRAL_KM = 100
+UMBRAL_METROS = 1_000_000
 
 
 # ============================================================
@@ -359,14 +360,14 @@ if buscar:
                 # ---------------------------------------------
                 # DETERMINAR SI ES EXACTO O CERCANO
 
-     
+    
                 # ---------------------------------------------
 
                 if valor == objetivo:
 
                     tipo_coincidencia = "🔴 EXACTO"
 
-                elif 0 <= diferencia < UMBRAL_MODIFICACION:
+                elif 0 <= diferencia < UMBRAL_KM:
 
                     tipo_coincidencia = "🟡 CERCANO <100K"
 
