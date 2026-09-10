@@ -10,7 +10,7 @@ import random
 
 st.set_page_config(
     page_title="Monky BIN Analyzer",
-    page_icon="",
+    page_icon="🐒",
     layout="wide"
 )
 
@@ -96,7 +96,7 @@ input {
 # TÍTULO
 # ============================================================
 
-st.title("🐒 🌿💨 MONKY BIN ANALYZER ")
+st.title("🐒 🌿💨 MONKY BIN ANALYZER")
 
 st.write(
     "Busca un valor exacto, realiza un barrido de las tres "
@@ -144,31 +144,34 @@ nuevo_km_input = st.number_input(
 
 
 # ============================================================
-# MARGEN DE METROS
-# ============================================================
-# FIJO: 1.100.000 metros
+# MARGEN DE BÚSQUEDA EN METROS
 # ============================================================
 
-margen = 1_100_000
+MARGEN_BUSQUEDA_METROS = 1_100_000
 
 st.number_input(
     "Margen de búsqueda en metros",
     min_value=0,
-    value=margen,
+    value=MARGEN_BUSQUEDA_METROS,
     step=100_000,
     disabled=True
 )
 
 
 # ============================================================
-# UMBRAL DE MODIFICACIÓN
-# ============================================================
-# Cualquier valor del barrido que esté a menos de
-# 100.000 unidades del objetivo será modificado.
+# UMBRALES INDEPENDIENTES DE MODIFICACIÓN
 # ============================================================
 
 UMBRAL_KM = 100
 UMBRAL_METROS = 1_000_000
+
+
+st.info(
+    f"Umbral KM: modificación si distancia absoluta < "
+    f"**{UMBRAL_KM:,} km** | "
+    f"Umbral metros: modificación si distancia absoluta < "
+    f"**{UMBRAL_METROS:,} m**"
+)
 
 
 # ============================================================
@@ -256,11 +259,13 @@ if buscar:
         )
 
         limite_inicio = (
-            objetivo_metros - margen
+            objetivo_metros
+            - MARGEN_BUSQUEDA_METROS
         )
 
         limite_fin = (
-            objetivo_metros + margen
+            objetivo_metros
+            + MARGEN_BUSQUEDA_METROS
         )
 
 
@@ -308,12 +313,15 @@ if buscar:
 
         resultados_metros = []
 
-        # Direcciones que cumplen el criterio de modificación
+        # Direcciones KM que cumplen < 100 km
         direcciones_km = []
 
-        # Direcciones donde aparece un equivalente
-        # en metros dentro del margen
+        # Todas las direcciones encontradas en el margen
         direcciones_metros = []
+
+        # Solamente las direcciones de metros que cumplen
+        # < 1.000.000 m
+        direcciones_metros_modificar = []
 
 
         # ====================================================
@@ -350,26 +358,28 @@ if buscar:
             ):
 
                 diferencia = (
-                    valor - objetivo
+                    valor
+                    - objetivo
                 )
 
                 distancia_absoluta = abs(
                     diferencia
                 )
 
+
                 # ---------------------------------------------
                 # DETERMINAR SI ES EXACTO O CERCANO
-
-    
                 # ---------------------------------------------
 
                 if valor == objetivo:
 
                     tipo_coincidencia = "🔴 EXACTO"
 
-                elif 0 <= diferencia < UMBRAL_KM:
+                elif distancia_absoluta < UMBRAL_KM:
 
-                    tipo_coincidencia = "🟡 CERCANO <100K"
+                    tipo_coincidencia = (
+                        f"🟡 CERCANO < {UMBRAL_KM} KM"
+                    )
 
                 else:
 
@@ -405,27 +415,29 @@ if buscar:
 
 
                 # =================================================
-                # GUARDAR VALORES PARA MODIFICAR
+                # GUARDAR VALORES KM PARA MODIFICAR
                 # =================================================
-                # ANTES SOLO SE GUARDABA:
                 #
-                # if valor == objetivo
+                # IMPORTANTE:
+                # Se utiliza ABSOLUTO.
                 #
-                # AHORA:
+                # Se modifican valores:
                 #
-                # cualquier valor cuya distancia absoluta
-                # respecto del objetivo sea < 100.000
+                # objetivo - 99
+                # objetivo
+                # objetivo + 99
+                #
+                # NO se modifica:
+                #
+                # objetivo - 100
+                # objetivo + 100
+                #
                 # =================================================
 
-                
-                    
-                if (
-                    valor >= objetivo
-                    and
-                    (valor - objetivo) < UMBRAL_MODIFICACION
-                ):
+                if distancia_absoluta < UMBRAL_KM:
+
                     direcciones_km.append(
-                       direccion
+                        direccion
                     )
 
 
@@ -442,6 +454,10 @@ if buscar:
                 diferencia = (
                     valor
                     - objetivo_metros
+                )
+
+                distancia_absoluta = abs(
+                    diferencia
                 )
 
 
@@ -466,7 +482,15 @@ if buscar:
                         diferencia,
 
                     "Distancia absoluta":
-                        abs(diferencia),
+                        distancia_absoluta,
+
+                    "Modifica":
+                        (
+                            "SÍ"
+                            if distancia_absoluta
+                            < UMBRAL_METROS
+                            else "NO"
+                        ),
 
                     "HEX":
                         f"0x{valor:08X}",
@@ -479,9 +503,24 @@ if buscar:
                 })
 
 
+                # =================================================
+                # GUARDAR TODOS LOS VALORES ENCONTRADOS
+                # =================================================
+
                 direcciones_metros.append(
                     direccion
                 )
+
+
+                # =================================================
+                # GUARDAR SOLAMENTE LOS QUE SE MODIFICAN
+                # =================================================
+
+                if distancia_absoluta < UMBRAL_METROS:
+
+                    direcciones_metros_modificar.append(
+                        direccion
+                    )
 
 
         # ====================================================
@@ -519,9 +558,9 @@ if buscar:
 
 
         st.info(
-            f"Se modificarán los valores cuya diferencia "
-            f"absoluta respecto de **{objetivo:,}** sea "
-            f"**menor a {1000000:,}**."
+            f"Se modificarán los valores cuya distancia "
+            f"absoluta respecto de **{objetivo:,} km** sea "
+            f"**menor a {UMBRAL_KM:,} km**."
         )
 
 
@@ -603,26 +642,26 @@ if buscar:
 
 
             # =================================================
-            # VALORES QUE SERÁN MODIFICADOS POR <100K
+            # VALORES QUE SERÁN MODIFICADOS POR < 100 KM
             # =================================================
 
             cercanos = resultado_barrido[
                 resultado_barrido[
                     "Distancia absoluta"
-                ] < UMBRAL_MODIFICACION
+                ] < UMBRAL_KM
             ]
 
 
             st.subheader(
-                f"Valores que cumplen < {UMBRAL_MODIFICACION:,}"
+                f"Valores KM que cumplen < {UMBRAL_KM:,} km"
             )
 
 
             if cercanos.empty:
 
                 st.warning(
-                    "No hay valores dentro del umbral "
-                    "de modificación."
+                    "No hay valores KM dentro del "
+                    "umbral de modificación."
                 )
 
             else:
@@ -630,7 +669,7 @@ if buscar:
                 st.success(
                     f"Se modificarán "
                     f"{len(cercanos)} "
-                    f"apariciones."
+                    f"apariciones KM."
                 )
 
 
@@ -685,11 +724,13 @@ if buscar:
         st.write(
             f"Objetivo: "
             f"**{objetivo_metros:,} metros**  \n"
-            f"Margen fijo: "
-            f"**±{margen:,} metros**  \n"
-            f"Rango: "
+            f"Margen de búsqueda: "
+            f"**±{MARGEN_BUSQUEDA_METROS:,} metros**  \n"
+            f"Rango de búsqueda: "
             f"**{limite_inicio:,} → "
-            f"{limite_fin:,} metros**"
+            f"{limite_fin:,} metros**  \n"
+            f"Umbral de modificación: "
+            f"**< {UMBRAL_METROS:,} metros**"
         )
 
 
@@ -697,7 +738,7 @@ if buscar:
 
             st.warning(
                 "No se encontraron valores dentro "
-                "del margen seleccionado."
+                "del margen de búsqueda."
             )
 
         else:
@@ -716,7 +757,7 @@ if buscar:
             st.success(
                 f"Se encontraron "
                 f"{len(resultado_metros)} "
-                f"coincidencias."
+                f"coincidencias dentro del margen."
             )
 
 
@@ -725,6 +766,46 @@ if buscar:
                 use_container_width=True,
                 hide_index=True
             )
+
+
+            # =================================================
+            # VALORES DE METROS QUE SE MODIFICARÁN
+            # =================================================
+
+            metros_a_modificar = resultado_metros[
+                resultado_metros[
+                    "Distancia absoluta"
+                ] < UMBRAL_METROS
+            ]
+
+
+            st.subheader(
+                f"Valores en metros que cumplen "
+                f"< {UMBRAL_METROS:,} m"
+            )
+
+
+            if metros_a_modificar.empty:
+
+                st.warning(
+                    "No hay valores en metros dentro "
+                    "del umbral de modificación."
+                )
+
+            else:
+
+                st.success(
+                    f"Se modificarán "
+                    f"{len(metros_a_modificar)} "
+                    f"apariciones en metros."
+                )
+
+
+                st.dataframe(
+                    metros_a_modificar,
+                    use_container_width=True,
+                    hide_index=True
+                )
 
 
             # =================================================
@@ -742,6 +823,8 @@ if buscar:
                 f"{cercano['Kilómetros']} km | "
                 f"Diferencia: "
                 f"{cercano['Diferencia (m)']:+,} m | "
+                f"Distancia absoluta: "
+                f"{cercano['Distancia absoluta']:,} m | "
                 f"Dirección: "
                 f"{cercano['Dirección']}"
             )
@@ -775,8 +858,14 @@ if buscar:
 
 
         st.write(
-            f"Umbral de modificación: "
-            f"**< {UMBRAL_MODIFICACION:,}**"
+            f"Umbral KM: "
+            f"**< {UMBRAL_KM:,} km**"
+        )
+
+
+        st.write(
+            f"Umbral metros: "
+            f"**< {UMBRAL_METROS:,} m**"
         )
 
 
@@ -790,7 +879,7 @@ if buscar:
 
 
         cantidad_metros = len(
-            direcciones_metros
+            direcciones_metros_modificar
         )
 
 
@@ -804,13 +893,13 @@ if buscar:
 
 
         col1.metric(
-            "KM exactos/cercanos",
+            "KM a modificar",
             cantidad_km
         )
 
 
         col2.metric(
-            "Valores en metros",
+            "Metros a modificar",
             cantidad_metros
         )
 
@@ -840,14 +929,6 @@ if buscar:
 
             # =================================================
             # MODIFICAR VALORES KM
-            # =================================================
-            # Incluye:
-            #
-            # 1. El valor exacto
-            # 2. Cualquier valor con:
-            #
-            #    abs(valor - objetivo) < 100.000
-            #
             # =================================================
 
             for direccion in direcciones_km:
@@ -880,10 +961,18 @@ if buscar:
 
                     tipo_modificacion = "KM exacto"
 
+                elif valor_anterior < objetivo:
+
+                    tipo_modificacion = (
+                        f"KM cercano por debajo "
+                        f"(< {UMBRAL_KM} km)"
+                    )
+
                 else:
 
                     tipo_modificacion = (
-                        "KM cercano (<100K)"
+                        f"KM cercano por encima "
+                        f"(< {UMBRAL_KM} km)"
                     )
 
 
@@ -971,7 +1060,7 @@ if buscar:
             # =================================================
 
             cantidad = len(
-                direcciones_metros
+                direcciones_metros_modificar
             )
 
 
@@ -1003,7 +1092,7 @@ if buscar:
             # =================================================
 
             for direccion, sufijo in zip(
-                direcciones_metros,
+                direcciones_metros_modificar,
                 sufijos
             ):
 
@@ -1185,7 +1274,7 @@ if buscar:
             # =================================================
 
             for direccion, sufijo in zip(
-                direcciones_metros,
+                direcciones_metros_modificar,
                 sufijos
             ):
 
