@@ -147,7 +147,7 @@ nuevo_km_input = st.number_input(
 # MARGEN DE BÚSQUEDA EN METROS
 # ============================================================
 
-MARGEN_BUSQUEDA_METROS = 110_000
+MARGEN_BUSQUEDA_METROS = 100_100_000
 
 st.number_input(
     "Margen de búsqueda en metros",
@@ -163,7 +163,7 @@ st.number_input(
 # ============================================================
 
 UMBRAL_KM = 100
-UMBRAL_METROS = 100_000
+UMBRAL_METROS = 100_000_000
 
 
 st.info(
