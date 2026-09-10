@@ -414,13 +414,15 @@ if buscar:
                 # respecto del objetivo sea < 100.000
                 # =================================================
 
+                
+                    
                 if (
-                    abs(valor - objetivo)
-                    < UMBRAL_MODIFICACION
+                    valor >= objetivo
+                    and
+                    (valor - objetivo) < UMBRAL_MODIFICACION
                 ):
-
                     direcciones_km.append(
-                        direccion
+                       direccion
                     )
 
 
